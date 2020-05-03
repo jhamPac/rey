@@ -8,7 +8,6 @@ import (
 // Store for data
 type Store interface {
 	Fetch(ctx context.Context) (string, error)
-	Cancel()
 }
 
 // Server creates a simple server to test
