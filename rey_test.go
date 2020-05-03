@@ -96,4 +96,21 @@ func TestServer(t *testing.T) {
 			t.Errorf("got %q, expected %q", got, data)
 		}
 	})
+
+	t.Run("tells store to cancel work if request is cancelled", func(t *testing.T) {
+		store := &SpyStore{data, false, t}
+		s := Server(store)
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		cancellingCtx, cancel := context.WithCancel(req.Context())
+		time.AfterFunc(5*time.Millisecond, cancel)
+		req = req.WithContext(cancellingCtx)
+
+		rr := httptest.NewRecorder()
+
+		s.ServeHTTP(rr, req)
+
+		store.assertWasCancelled()
+	})
 }
