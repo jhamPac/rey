@@ -77,3 +77,23 @@ func TestHandler(t *testing.T) {
 		}
 	})
 }
+
+func TestServer(t *testing.T) {
+	data := "Home, home on the range"
+
+	t.Run("returns data from store", func(t *testing.T) {
+		store := &SpyStore{data, false, t}
+		s := Server(store)
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rr := httptest.NewRecorder()
+
+		s.ServeHTTP(rr, req)
+
+		got := rr.Body.String()
+
+		if got != data {
+			t.Errorf("got %q, expected %q", got, data)
+		}
+	})
+}
