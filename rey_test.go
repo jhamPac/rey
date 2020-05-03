@@ -1,6 +1,7 @@
 package rey
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,8 +23,9 @@ func (s *SpyStore) Cancel() {
 }
 
 func TestHandler(t *testing.T) {
+	data := "A long time ago in a galaxy far, far away"
+
 	t.Run("testing / path", func(t *testing.T) {
-		data := "A long time ago in a galaxy far, far away"
 		s := Server(&SpyStore{data, false})
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -36,4 +38,22 @@ func TestHandler(t *testing.T) {
 		}
 	})
 
+	t.Run("store should cancel work when cancelled", func(t *testing.T) {
+		store := &SpyStore{data, false}
+		s := Server(store)
+
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+
+		cancellingCtx, cancel := context.WithCancel(req.Context())
+		time.AfterFunc(5*time.Millisecond, cancel)
+		req = req.WithContext(cancellingCtx)
+
+		rr := httptest.NewRecorder()
+
+		s.ServeHTTP(rr, req)
+
+		if !store.cancelled {
+			t.Errorf("store was not cancelled")
+		}
+	})
 }
