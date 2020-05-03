@@ -11,6 +11,7 @@ import (
 type SpyStore struct {
 	response  string
 	cancelled bool
+	t         *testing.T
 }
 
 func (s *SpyStore) Fetch() string {
@@ -22,11 +23,25 @@ func (s *SpyStore) Cancel() {
 	s.cancelled = true
 }
 
+func (s *SpyStore) assertWasCancelled() {
+	s.t.Helper()
+	if !s.cancelled {
+		s.t.Error("store was not told to cancel")
+	}
+}
+
+func (s *SpyStore) assertWasNotCancelled() {
+	s.t.Helper()
+	if s.cancelled {
+		s.t.Error("store was told to cancel")
+	}
+}
+
 func TestHandler(t *testing.T) {
 	data := "A long time ago in a galaxy far, far away"
 
 	t.Run("testing / path", func(t *testing.T) {
-		store := &SpyStore{data, false}
+		store := &SpyStore{data, false, t}
 		s := Server(store)
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -44,7 +59,7 @@ func TestHandler(t *testing.T) {
 	})
 
 	t.Run("store should cancel work when cancelled", func(t *testing.T) {
-		store := &SpyStore{data, false}
+		store := &SpyStore{data, false, t}
 		s := Server(store)
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
