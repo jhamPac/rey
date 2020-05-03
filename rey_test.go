@@ -26,7 +26,8 @@ func TestHandler(t *testing.T) {
 	data := "A long time ago in a galaxy far, far away"
 
 	t.Run("testing / path", func(t *testing.T) {
-		s := Server(&SpyStore{data, false})
+		store := &SpyStore{data, false}
+		s := Server(store)
 
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		rr := httptest.NewRecorder()
@@ -35,6 +36,10 @@ func TestHandler(t *testing.T) {
 
 		if rr.Body.String() != data {
 			t.Errorf(`got "%s", expected "%s"`, rr.Body.String(), data)
+		}
+
+		if store.cancelled {
+			t.Error("store should have not cancelled")
 		}
 	})
 
